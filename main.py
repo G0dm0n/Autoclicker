@@ -61,3 +61,6 @@ if __name__ == "__main__":
     clickerThread.start()
     startStopThread.start()
     root.mainloop()
+    
+    
+    negro neegojifsoidsifs\i
