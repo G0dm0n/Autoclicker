@@ -38,7 +38,7 @@ def clicker():
     while True:
         if clicking:
             mouse.click(Button.left, 1)
-
+sss
 # Threading
 startStopThread = threading.Thread(target=startStop)
 clickerThread = threading.Thread(target=clicker)
