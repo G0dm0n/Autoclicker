@@ -4,44 +4,63 @@ from pynput.mouse import Button, Controller
 import threading
 import time
 
-with open('config.txt', 'r') as file:
-    targetKey = file.read()
-
 def keyButton():
+    pauseListener.clear()
     def sniffTargetKey(key):
         global targetKey
         try:
             targetKey = key.char
-            with open('config.txt', 'w') as file:
-                file.write(str(targetKey))
         except AttributeError:
             targetKey = key
-            with open('config.txt', 'w') as file:
-                file.write(str(targetKey))
         return False
     with keyboard.Listener(on_press=sniffTargetKey) as listener:
         listener.join()
+    updateLabel(keyLabel, str(targetKey))
+    pauseListener.set()
 
 def startStop():
     def sniffKeys(key):
-        global targetKey, clicking
-        try:
-            if targetKey == key.char:
-                clicking = not clicking
-        except AttributeError:
-            if targetKey == key:
-                clicking = not clicking
+        global targetKey, clicking, activeListener
+        if pauseListener.is_set():
+            try:
+                if targetKey == key.char:
+                    eventClicking()
+            except AttributeError:
+                if targetKey == key:
+                    eventClicking()
     with keyboard.Listener(on_press=sniffKeys) as listener:
         listener.join()
 
 def clicker():
     while True:
-        if clicking:
+        if clicking.is_set():
             mouse.click(Button.left, 1)
-sss
+            time.sleep(0.01)
+        else:
+            time.sleep(0.1)
+            
+def updateLabel(label, text):
+    def textUpdate():
+        label.config(text=text)
+    root.after(150, textUpdate)
+    
+def eventClicking():
+    if clicking.is_set():
+        clicking.clear()
+    else:
+        clicking.set()
+    
 # Threading
-startStopThread = threading.Thread(target=startStop)
-clickerThread = threading.Thread(target=clicker)
+startStopThread = threading.Thread(target=startStop, daemon=True)
+clickerThread = threading.Thread(target=clicker, daemon=True)
+
+# Variables
+pauseListener = threading.Event()
+pauseListener.set()
+clicking = threading.Event()
+mouse = Controller()
+targetKey = "o"
+activeListener = True
 
 # Tkinter
 root = tk.Tk()
@@ -51,10 +70,6 @@ keyButton = tk.Button(root, text="Change", font=("Verdana", 10), command=keyButt
 keyButton.place(x=70, y=80)
 keyLabel = tk.Label(root, text=targetKey, font=('Verdana', 14))
 keyLabel.place(x=50, y=50)
-
-# Variables
-clicking = False
-mouse = Controller()
 
 # main func
 if __name__ == "__main__":
